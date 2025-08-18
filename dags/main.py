@@ -31,7 +31,8 @@ TABLE_LIST = [
     'ds.md_exchange_rate_d',
     'ds.md_ledger_account_s',
     'rd.deal_info',
-    'rd.product'
+    'rd.product',
+    'dm.dict_currency'
 ]
 
 conf.set('core', 'template_searchpath', QUERY_DIR)
