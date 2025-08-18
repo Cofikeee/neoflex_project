@@ -23,48 +23,50 @@ from utils import insert_data_from_csv
 # dags/source/md_exchange_rate_d.csv
 # dags/source/md_ledger_account_s.csv
 
-STG_DS_TABLE_LIST = [
-    'ft_balance_f',
-    'ft_posting_f',
-    'md_account_d',
-    'md_currency_d',
-    'md_exchange_rate_d',
-    'md_ledger_account_s'
+TABLE_LIST = [
+    'ds.ft_balance_f',
+    'ds.ft_posting_f',
+    'ds.md_account_d',
+    'ds.md_currency_d',
+    'ds.md_exchange_rate_d',
+    'ds.md_ledger_account_s',
+    'rd.deal_info',
+    'rd.product'
 ]
 
 conf.set('core', 'template_searchpath', QUERY_DIR)
 
 
-def log_finished_task(target_table: str, source_name: str, start_date: datetime) -> None:
+def log_finished_task(target_schema: str, target_table: str, source_name: str, start_date: datetime) -> None:
     """
-    > Logs metadata about a finished task group run into `logs.ds_changelog`.
+    > Logs metadata about a finished task group run into `logs.csv_imports_log`.
     > Added a small 5-second delay to `end_date` as required in task.
     """
     sql_hook = PostgresHook(DWH_CONNECTION)
     conn = sql_hook.get_conn()
     cursor = conn.cursor()
 
-    cursor.execute(f"SELECT COUNT(*) FROM ds.{target_table}")
+    cursor.execute(f"SELECT COUNT(*) FROM {target_schema}.{target_table}")
     rows_inserted = cursor.fetchone()[0]
 
     query = """
-        INSERT INTO logs.ds_changelog
+        INSERT INTO logs.csv_imports_log
             (target_table, source, rows_inserted, start_date, end_date)
         VALUES (%s, %s, %s, %s, NOW() + INTERVAL '5 SECONDS')
     """
-    cursor.execute(query, (target_table, source_name, rows_inserted, start_date))
+    cursor.execute(query, (f'{target_schema}.{target_table}', source_name, rows_inserted, start_date))
     conn.commit()
     cursor.close()
     conn.close()
 
 
-def make_table_group(group_id: str, target_table: str, sql_file: str) -> TaskGroup:
+def make_table_group(group_id: str, target_schema: str, target_table: str, sql_file: str) -> TaskGroup:
     """
     > Creates a TaskGroup for a given stg-to-ds pipeline.
     > Each group contains 3 tasks:
       - PARSE: loads raw CSV into 'stg' schema,
       - UPSERT: executes the SQL upsert into 'ds' schema,
-      - LOG: records the results into `logs.ds_changelog`.
+      - LOG: records the results into `logs.csv_imports_log`.
     > Returns the constructed TaskGroup.
     """
     start_timestamp = datetime.now()
@@ -80,13 +82,14 @@ def make_table_group(group_id: str, target_table: str, sql_file: str) -> TaskGro
         upsert = SQLExecuteQueryOperator(
             task_id=f'upsert_{target_table}',
             conn_id=DWH_CONNECTION,
-            sql=f'{{% include "query/{sql_file}" %}}',
+            sql=f'{{% include "queries/{sql_file}" %}}',
         )
 
         log = PythonOperator(
             task_id=f'log_{target_table}',
             python_callable=log_finished_task,
             op_kwargs={
+                'target_schema': target_schema,
                 'target_table': target_table,
                 'source_name': f'{target_table}.csv',
                 'start_date': start_timestamp
@@ -107,12 +110,15 @@ with DAG(dag_id='elt_pipeline',
 
     parallel_tasks = []
 
-    for table in STG_DS_TABLE_LIST:
+    for table in TABLE_LIST:
         # Creating task group for each table
+        schema_name = table.split('.')[0]
+        table_name = table.split('.')[1]
         task_group = make_table_group(
-            group_id=f'{table}_group',
-            target_table=table,
-            sql_file=f'stg_ds__{table}.sql'
+            group_id=f'{table_name}_group',
+            target_schema=schema_name,
+            target_table=table_name,
+            sql_file=f'stg_{schema_name}__{table_name}.sql'
         )
         parallel_tasks.append(task_group)
 

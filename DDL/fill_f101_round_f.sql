@@ -63,7 +63,7 @@ begin
 
     get diagnostics v_rows = row_count;
 
-    -- 5. Logging
+    -- Logging
     insert into logs.dm_changelog(target_table, source, on_date, rows_inserted, start_date, end_date)
     values ('dm.dm_f101_round_f', 'procedure: dm.fill_f101_round_f', i_OnDate,  v_rows,v_start_time,  clock_timestamp() + INTERVAL '5 seconds');
 end;

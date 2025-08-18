@@ -7,8 +7,8 @@ AIRFLOW_DEFAULT_CONFIG = {
     'catchup': False
 }
 
-SOURCE_DIR = '/opt/airflow/dags/source'
-QUERY_DIR = '/opt/airflow/dags/query'
+SOURCE_DIR = '/opt/airflow/dags/sources'
+QUERY_DIR = '/opt/airflow/dags/queries'
 REPORT_DIR = '/opt/airflow/reports'
 DWH_CONNECTION = 'neoflex_conn'
 DB_NAME = 'neoflex_db'

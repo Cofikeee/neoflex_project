@@ -51,3 +51,8 @@ ALTER TABLE dm.client ADD CONSTRAINT client_pk PRIMARY KEY (client_rk, effective
 
 COMMIT;
 
+ /*
+ На какое-то время можно оставить таблицу dm.depricated_table_client в качестве бэкапа или же удалить сразу.
+ В конечном итоге она будет дропнута.
+ */
+DROP TABLE dm.depricated_table_client;
