@@ -13,18 +13,13 @@ INSERT INTO rd.deal_info (
     effective_from_date,
     effective_to_date
 )
-WITH deal_rn AS
+WITH deals_rn AS
     (
-        SELECT DISTINCT *, ROW_NUMBER() OVER (PARTITION BY deal_rk ORDER BY effective_from_date DESC) AS rn
+        SELECT DISTINCT *, ROW_NUMBER() OVER (PARTITION BY deal_rk ORDER BY effective_from_date) AS rn
         FROM stg.deal_info
         WHERE deal_rk IS NOT NULL
-    ),
-    dupes AS (
-        SELECT *, ROW_NUMBER() OVER () AS dupes_rn
-        FROM deal_rn
-        WHERE rn > 1
     )
-SELECT (SELECT MAX(deal_rk) FROM rd.deal_info) + dupes_rn
+SELECT deal_rk
      , deal_num
      , deal_name
      , deal_sum
@@ -37,7 +32,8 @@ SELECT (SELECT MAX(deal_rk) FROM rd.deal_info) + dupes_rn
      , deal_type_cd
      , effective_from_date::DATE
      , effective_to_date::DATE
-FROM dupes
+FROM deals_rn
+WHERE rn = 1
 
 ON CONFLICT (deal_rk) DO UPDATE
     SET deal_num            = EXCLUDED.deal_num,

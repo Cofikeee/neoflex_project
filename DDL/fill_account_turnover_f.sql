@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE dm.fill_account_turnover_f(i_OnDate DATE)
+CREATE OR REPLACE PROCEDURE dm.fill_account_turnover_f(IN i_ondate date)
     LANGUAGE plpgsql
 AS
 $$
@@ -32,8 +32,27 @@ BEGIN
     GET DIAGNOSTICS v_rows = ROW_COUNT;
 
     INSERT INTO logs.dm_changelog(target_table, source, on_date, rows_inserted, start_date, end_date)
-    VALUES ('dm.dm_account_turnover_f', 'ds.fill_account_turnover_f', i_OnDate, v_rows, v_start_time, clock_timestamp() + INTERVAL '5 seconds');
+    VALUES ('dm.dm_account_turnover_f', 'procedure: dm.fill_account_turnover_f', i_OnDate, v_rows, v_start_time, clock_timestamp() + INTERVAL '5 seconds');
 END;
 $$;
 
+CREATE OR REPLACE PROCEDURE dm.fill_account_turnover_f(IN i_from_date date, IN i_to_date date)
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    d DATE;
+BEGIN
+    -- validate input
+    IF i_from_date > i_to_date THEN
+        RAISE EXCEPTION 'Invalid input: i_from_date (%) is greater than i_to_date (%)',
+            i_from_date, i_to_date;
+    END IF;
 
+    FOR d IN
+        SELECT generate_series(i_from_date, i_to_date, INTERVAL '1 day')::DATE
+        LOOP
+            CALL dm.fill_account_turnover_f(d);
+        END LOOP;
+END;
+$$;

@@ -1,5 +1,4 @@
 from datetime import datetime
-from airflow.models import Variable
 
 AIRFLOW_DEFAULT_CONFIG = {
     'owner': '@pbushmanov',

@@ -1,4 +1,4 @@
-CREATE PROCEDURE fill_f101_round_f(IN i_ondate date)
+CREATE OR REPLACE PROCEDURE dm.fill_f101_round_f(IN i_ondate date)
     LANGUAGE plpgsql
 AS
 $$

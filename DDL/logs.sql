@@ -10,11 +10,12 @@ CREATE TABLE logs.dm_changelog
     end_date      TIMESTAMP
 );
 
-CREATE TABLE logs.ds_changelog
+CREATE TABLE logs.file_transaction_log
 (
-    target_table  TEXT,
-    source        TEXT,
-    rows_inserted BIGINT,
-    start_date    TIMESTAMP,
-    end_date      TIMESTAMP
+    operation_type TEXT,
+    table_name     TEXT,
+    file_name      TEXT,
+    rows_inserted  BIGINT,
+    start_date     TIMESTAMP,
+    end_date       TIMESTAMP
 );
