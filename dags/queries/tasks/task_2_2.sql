@@ -2,7 +2,6 @@
 -- Смотрим сколько дублей имеется в deal_info и product,
 -- так как я планирую установить констеинт на уникальность
 
-
 --------------------------------- deal_info
 SELECT * FROM rd.deal_info
 WHERE deal_rk IN (SELECT deal_rk
@@ -118,11 +117,9 @@ DELETE FROM rd.loan_holiday lh
 WHERE lh.ctid = lhd.postgres_ctid
   AND lhd.rn > 1;
 
-
 DELETE FROM dm.loan_holiday_info lhi
     USING loan_holiday_dupes lhd
 WHERE lhi.deal_rk = lhd.deal_rk
-  AND lhi.loan_holiday_fact_finish_date = lhd.loan_holiday_last_possible_date
   AND lhd.rn > 1;
 
 -- Констреинт:
